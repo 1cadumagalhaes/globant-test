@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.connection import (
@@ -8,6 +8,7 @@ from app.dependencies.connection import (
 )
 from app.models.responses import DepartmentHires, QuarterlyHires
 from app.services.db_service import DBService
+from app.utils.parsers import generate_csv_response
 
 router = APIRouter(prefix='/reports', tags=['reports'])
 
@@ -15,6 +16,9 @@ router = APIRouter(prefix='/reports', tags=['reports'])
 @router.get('/quarterly-hiring-2021', response_model=List[QuarterlyHires])
 async def get_quarterly_hiring_2021(
     session: AsyncSession = Depends(get_db),
+    format: str = Query(
+        'json', enum=['json', 'csv'], description='Response format'
+    ),
 ) -> List[QuarterlyHires]:
     """
     Get a report of employees hired in 2021 by quarter, department and job
@@ -53,6 +57,9 @@ async def get_quarterly_hiring_2021(
             job
         """  # noqa: E501
         results = await db_service.execute_select(query)
+
+        if format == 'csv':
+            return generate_csv_response(results, 'quarterly_hiring_2021.csv')
         return results
 
     except Exception as e:
@@ -67,6 +74,9 @@ async def get_quarterly_hiring_2021(
 )
 async def get_departments_above_mean_2021(
     session: AsyncSession = Depends(get_db),
+    format: str = Query(
+        'json', enum=['json', 'csv'], description='Response format'
+    ),
 ) -> List[DepartmentHires]:
     """
     Get departments that hired more employees than the mean in 2021
@@ -101,6 +111,11 @@ async def get_departments_above_mean_2021(
             hired_count DESC
         """
         results = await db_service.execute_select(query)
+
+        if format == 'csv':
+            return generate_csv_response(
+                results, 'departments_above_mean_2021.csv'
+            )
         return results
 
     except Exception as e:
