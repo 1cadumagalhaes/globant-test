@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     postgres_pool_size: int = 5
     verbose_db: bool = False
 
+    max_batch_size: int = 2000
+
     @computed_field
     @property
     def server_host(self) -> str:

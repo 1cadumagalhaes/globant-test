@@ -4,15 +4,37 @@ import logging
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import Settings
 from app.dependencies.connection import get_db
 from app.models.base import Departments, HiredEmployees, Jobs
-from app.models.responses import UploadResponse
+from app.models.responses import ErrorDetail, UploadResponse
 from app.services.csv_service import CSVService
 from app.services.db_service import DBService
 
 router = APIRouter(prefix='/upload', tags=['upload'])
 
 logger = logging.getLogger(__name__)
+settings = Settings()
+
+
+def format_error_message(error_msg: str) -> str:
+    """Extract field name, error and
+    input value from Pydantic validation message"""
+    try:
+        lines = error_msg.split('\n')
+        field = lines[1].strip()
+        error = lines[2].strip()
+
+        # Extract input value from the error message
+        if 'input_value=' in error:
+            input_value = error.split('input_value=')[1].split(',')[0]
+            return f"{field}: got '{input_value}' - {error.split('] [')[0]}"
+
+        return f'{field}: {error}'
+    except:  # noqa: E722
+        return error_msg.split('\n')[
+            0
+        ]  # Fallback to first line if structure is different
 
 
 async def process_upload(
@@ -26,9 +48,16 @@ async def process_upload(
     Generic function to process CSV uploads for any model.
     """
     try:
-        if not file.filename.endswith('.csv'):
+        # Safe filename check
+        if (
+            not file
+            or not getattr(file, 'filename', '')
+            or not file.filename.endswith('.csv')
+        ):
             logger.error(
-                f'Invalid file type for {entity_name}: {file.filename}'
+                f'Invalid file type for {entity_name}: {
+                    getattr(file, "filename", "No filename")
+                }'
             )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -38,20 +67,33 @@ async def process_upload(
         contents = await file.read()
         csv_file = io.StringIO(contents.decode('utf-8'))
 
-        records, errors = CSVService.read_uploaded_csv(
+        records, validation_errors = CSVService.read_uploaded_csv(
             csv_file, model_class, has_headers
         )
 
-        if not records and errors:
-            logger.error(f'CSV validation failed for {entity_name}: {errors}')
+        # Convert tuple errors to ErrorDetail objects
+        formatted_errors = [
+            ErrorDetail(row=row, message=format_error_message(error_msg))
+            for row, error_msg in validation_errors
+        ]
+
+        if not records:
+            logger.error(
+                f'CSV validation failed for {entity_name}: {formatted_errors}'
+            )
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail={'message': 'No valid records found', 'errors': errors},
+                detail={
+                    'message': 'No valid records found',
+                    'errors': formatted_errors,
+                },
             )
 
         try:
             db_service = DBService(db)
-            await db_service.create_batch(records)
+            await db_service.create_batch(
+                records, batch_size=settings.max_batch_size
+            )
         except Exception as e:
             logger.error(
                 f'Database error while uploading {entity_name}: {str(e)}',
@@ -62,13 +104,20 @@ async def process_upload(
                 detail=f'Database error: {str(e)}',
             )
 
-        logger.info(
+        # If we got here, we successfully inserted at least some records
+        success_message = (
             f'Successfully uploaded {len(records)} {entity_name} records'
         )
+        if formatted_errors:
+            success_message += (
+                f' with {len(formatted_errors)} validation errors'
+            )
+
+        logger.info(success_message)
         return UploadResponse(
-            message=f'{entity_name} uploaded successfully',
+            message=success_message,
             total_records=len(records),
-            errors=errors,
+            errors=formatted_errors,
         )
 
     except UnicodeDecodeError as e:
