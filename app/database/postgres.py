@@ -25,7 +25,6 @@ class PostgresSessionManager:
         self.session_maker = None
         self.session = None
         self.init_db()
-        self.instrument_asyncpg()
 
     def init_db(self):
         async_engine = create_async_engine(
