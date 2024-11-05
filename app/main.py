@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 from http import HTTPStatus
 
@@ -7,6 +8,13 @@ from fastapi.concurrency import asynccontextmanager
 from app.config import Settings
 from app.dependencies.connection import get_db
 from app.models.responses import Message
+from app.routes.upload import router as upload_router
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+)
 
 
 @asynccontextmanager
@@ -34,3 +42,6 @@ app = FastAPI(
 @app.get('/', status_code=HTTPStatus.OK, response_model=Message)
 def read_root():
     return {'message': 'Olá Mundo!!!'}
+
+
+app.include_router(upload_router)
