@@ -1,4 +1,3 @@
-import secrets
 from typing import Annotated, Any, Literal, Optional
 
 from pydantic import (
@@ -35,8 +34,6 @@ class Settings(BaseSettings):
         list[AnyUrl] | list[str], BeforeValidator(parse_cors)
     ] = []
 
-    secret_key: str = secrets.token_urlsafe(32)
-    access_token_expire_minutes: int = 60 * 24 * 8
     log_level: str = 'INFO'
 
     environment: Literal['local', 'staging', 'production'] = 'local'

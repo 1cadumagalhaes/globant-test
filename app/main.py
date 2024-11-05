@@ -8,6 +8,7 @@ from fastapi.concurrency import asynccontextmanager
 from app.config import Settings
 from app.dependencies.connection import get_db
 from app.models.responses import Message
+from app.routes.reports import router as report_router
 from app.routes.upload import router as upload_router
 
 # Configure logging
@@ -45,3 +46,4 @@ def read_root():
 
 
 app.include_router(upload_router)
+app.include_router(report_router)

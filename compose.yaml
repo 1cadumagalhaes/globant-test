@@ -33,9 +33,9 @@ services:
             watch:
                 - action: sync+restart
                   path: ./app
-                  target: /app
+                  target: /api/app
                 - action: rebuild
                   path: pyproject.toml
-                  target: /app/pyproject.toml
+                  target: /api/pyproject.toml
         depends_on:
             - postgres
