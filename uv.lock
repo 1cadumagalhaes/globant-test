@@ -229,10 +229,8 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "alembic" },
-    { name = "greenlet" },
     { name = "httpx" },
     { name = "pytest" },
-    { name = "pytest-async" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
     { name = "taskipy" },
@@ -253,10 +251,8 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "alembic", specifier = ">=1.14.0" },
-    { name = "greenlet", specifier = ">=3.1.1" },
     { name = "httpx", specifier = ">=0.27.2" },
     { name = "pytest", specifier = ">=8.3.3" },
-    { name = "pytest-async", specifier = ">=0.1.1" },
     { name = "pytest-asyncio", specifier = ">=0.24.0" },
     { name = "ruff", specifier = ">=0.7.2" },
     { name = "taskipy", specifier = ">=1.14.0" },
@@ -584,15 +580,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/8b/6c/62bbd536103af674e227c41a8f3dcd022d591f6eed5facb5a0f31ee33bbc/pytest-8.3.3.tar.gz", hash = "sha256:70b98107bd648308a7952b06e6ca9a50bc660be218d53c257cc1fc94fda10181", size = 1442487 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6b/77/7440a06a8ead44c7757a64362dd22df5760f9b12dc5f11b6188cd2fc27a0/pytest-8.3.3-py3-none-any.whl", hash = "sha256:a6853c7375b2663155079443d2e45de913a911a11d669df02a50814944db57b2", size = 342341 },
-]
-
-[[package]]
-name = "pytest-async"
-version = "0.1.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ff/b6/c15344fd2894fe93f15ce0f503d25afc2506ebe01a3c3ea52044169d510c/pytest_async-0.1.1.tar.gz", hash = "sha256:0d6ffd3ebac2f3aa47d606dbae1984750268a89dc8caf4a908ba61c60299cdfd", size = 5339 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/4f/bdd43dd0838c2b0c0487a8de0480a30fb797e49abc4c8c68aca2912fd636/pytest_async-0.1.1-py3-none-any.whl", hash = "sha256:11cc41eef82592951d56c2bb9b0e6ab21b2f0f00663e78d95694a80d965be930", size = 2778 },
 ]
 
 [[package]]
