@@ -87,7 +87,10 @@ class DBService:
         try:
             result = await self.session.execute(text(query), params or {})
             columns = result.keys()
-            return [dict(zip(columns, row)) for row in result.fetchall()]
+            return [
+                dict(zip(columns, row, strict=False))
+                for row in result.fetchall()
+            ]
 
         except SQLAlchemyError as e:
             logger.error(

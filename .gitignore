@@ -88,3 +88,4 @@ pytest_cache
 .vscode
 .ruff_cache
 .pytest_cache
+.postgres-data

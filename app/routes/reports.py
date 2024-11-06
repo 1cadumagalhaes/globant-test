@@ -1,4 +1,4 @@
-from typing import List
+from typing import Annotated, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +15,7 @@ router = APIRouter(prefix='/reports', tags=['reports'])
 
 @router.get('/quarterly-hiring-2021', response_model=List[QuarterlyHires])
 async def get_quarterly_hiring_2021(
-    session: AsyncSession = Depends(get_db),
+    session: Annotated[AsyncSession, Depends(get_db)],
     format: str = Query(
         'json', enum=['json', 'csv'], description='Response format'
     ),
@@ -66,14 +66,14 @@ async def get_quarterly_hiring_2021(
         raise HTTPException(
             status_code=500,
             detail=f'Error generating quarterly hiring report: {str(e)}',
-        )
+        ) from e
 
 
 @router.get(
     '/departments-above-mean-2021', response_model=List[DepartmentHires]
 )
 async def get_departments_above_mean_2021(
-    session: AsyncSession = Depends(get_db),
+    session: Annotated[AsyncSession, Depends(get_db)],
     format: str = Query(
         'json', enum=['json', 'csv'], description='Response format'
     ),
@@ -122,4 +122,4 @@ async def get_departments_above_mean_2021(
         raise HTTPException(
             status_code=500,
             detail=f'Error generating departments above mean report: {str(e)}',
-        )
+        ) from e

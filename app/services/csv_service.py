@@ -23,7 +23,6 @@ class CSVService:
             if has_headers:
                 next(reader)
 
-            # Get fields using SQLModel's inspect
             mapper = sqlmodel_inspect(model_class)
             expected_fields = [column.description for column in mapper.columns]
 
@@ -62,6 +61,6 @@ class CSVService:
         mapper,
     ) -> dict:
         record_dict = {}
-        for field, value in zip(expected_fields, row):
+        for field, value in zip(expected_fields, row, strict=False):
             record_dict[field] = value
         return record_dict

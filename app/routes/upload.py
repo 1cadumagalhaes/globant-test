@@ -1,5 +1,6 @@
 import io
 import logging
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,16 +26,13 @@ def format_error_message(error_msg: str) -> str:
         field = lines[1].strip()
         error = lines[2].strip()
 
-        # Extract input value from the error message
         if 'input_value=' in error:
             input_value = error.split('input_value=')[1].split(',')[0]
             return f"{field}: got '{input_value}' - {error.split('] [')[0]}"
 
         return f'{field}: {error}'
     except:  # noqa: E722
-        return error_msg.split('\n')[
-            0
-        ]  # Fallback to first line if structure is different
+        return error_msg.split('\n')[0]
 
 
 async def process_upload(
@@ -81,11 +79,15 @@ async def process_upload(
             logger.error(
                 f'CSV validation failed for {entity_name}: {formatted_errors}'
             )
+            error_details = [
+                {'row': error.row, 'message': error.message}
+                for error in formatted_errors
+            ]
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail={
                     'message': 'No valid records found',
-                    'errors': formatted_errors,
+                    'errors': error_details,
                 },
             )
 
@@ -102,7 +104,7 @@ async def process_upload(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f'Database error: {str(e)}',
-            )
+            ) from e
 
         # If we got here, we successfully inserted at least some records
         success_message = (
@@ -127,7 +129,7 @@ async def process_upload(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Invalid CSV file encoding. Please use UTF-8',
-        )
+        ) from e
     except HTTPException:
         raise
     except Exception as e:
@@ -137,14 +139,14 @@ async def process_upload(
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        ) from e
 
 
 @router.post('/departments', response_model=UploadResponse)
 async def upload_departments(
-    file: UploadFile = File(...),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    file: UploadFile = File(...),  # noqa: B008
     has_headers: bool = False,
-    db: AsyncSession = Depends(get_db),
 ):
     """Upload departments from CSV file."""
     return await process_upload(
@@ -154,9 +156,9 @@ async def upload_departments(
 
 @router.post('/jobs', response_model=UploadResponse)
 async def upload_jobs(
-    file: UploadFile = File(...),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    file: UploadFile = File(...),  # noqa: B008
     has_headers: bool = False,
-    db: AsyncSession = Depends(get_db),
 ):
     """Upload jobs from CSV file."""
     return await process_upload(file, Jobs, has_headers, db, 'Jobs')
@@ -164,9 +166,9 @@ async def upload_jobs(
 
 @router.post('/employees', response_model=UploadResponse)
 async def upload_employees(
-    file: UploadFile = File(...),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    file: UploadFile = File(...),  # noqa: B008
     has_headers: bool = False,
-    db: AsyncSession = Depends(get_db),
 ):
     """Upload hired employees from CSV file."""
     return await process_upload(

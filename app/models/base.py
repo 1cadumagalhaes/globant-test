@@ -47,7 +47,7 @@ class HiredEmployees(BaseModel, SQLModel, table=True):
         try:
             dt = datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
             return dt
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as err:
             raise ValueError(
                 'Invalid datetime format. Expected: YYYY-MM-DDThh:mm:ssZ'
-            )
+            ) from err
